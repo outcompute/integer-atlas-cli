@@ -20,7 +20,7 @@ installation happen automatically; power users get escape-hatch flags.
 Setup is a guided one-liner, not a subcommand:
 
 ```
-curl -fsSL https://<host>/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/outcompute/integer-atlas-cli/main/install.sh | sh
 ```
 
 It detects the platform, asks **what you want**, installs accordingly, and creates the
@@ -141,7 +141,7 @@ then `sideload` to test locally.
 
 **Consumer (install → query):**
 ```
-curl -fsSL https://<host>/install.sh | sh      # choose SQL-only
+curl -fsSL https://raw.githubusercontent.com/outcompute/integer-atlas-cli/main/install.sh | sh      # choose SQL-only
 integer-atlas packs                             # what's available + holes
 integer-atlas describe omega_big                # type & which ranges carry it
 integer-atlas fetch --start 1 --end 1000000 --columns omega_big,is_prime
