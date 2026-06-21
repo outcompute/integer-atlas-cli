@@ -1,0 +1,6 @@
+/integer-atlas
+/ia
+*.test
+*.out
+.DS_Store
+.venv/

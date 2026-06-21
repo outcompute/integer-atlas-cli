@@ -1,0 +1,34 @@
+name: Release
+
+# On a version tag, build a cgo (embedded-DuckDB) binary per OS on its native
+# runner and attach them to the GitHub release. (cgo can't be cross-compiled
+# cleanly, so each target builds where it runs. Windows is not built.)
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset: integer-atlas-linux-amd64
+          - os: macos-latest
+            asset: integer-atlas-darwin-arm64
+          - os: macos-13
+            asset: integer-atlas-darwin-amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - run: CGO_ENABLED=1 go build -o ${{ matrix.asset }} .
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset }}
