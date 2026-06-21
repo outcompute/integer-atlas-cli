@@ -62,13 +62,19 @@ go build -o integer-atlas .
 Reads the Shards repo as a local path or git URL (`--registry`); `--release` checks out a
 git ref.
 
-## Manifest pointer
+## Registry and snapshots
 
-Hard-pointed at a single stable `index.json` on the Shards release branch (overridable
-via `--registry`). The rolling manifest at the branch tip is the default (always latest);
-`--release <name>` pins an immutable dataset snapshot. The cache auto-refreshes (force
-with `--refresh`).
+`--registry` points at the Shards repo (a git URL or local path); the default is the
+canonical repo. The CLI reads its `accepted/` and `pending/` directories directly — there
+is no index file. `--release <ref>` pins a git tag/commit for a reproducible snapshot
+(default: latest on the default branch). The local copy auto-refreshes on a short TTL
+(force with `--refresh`).
 
 ## Dependencies
 
-Consumes Shards over HTTP; drives Algos via subprocess. Does not import either repo's code.
+Reads the Shards repo (git clone or local path) and downloads shard files over HTTP from
+their manifest URLs; drives Algos via subprocess. Does not import either repo's code.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
