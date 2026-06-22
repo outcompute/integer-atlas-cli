@@ -301,6 +301,8 @@ func cmdSubmit(args []string) int {
 	fmt.Printf("body:  %s shard %d..%d (%d columns) computed with %q; hosted at %s\n",
 		m.tableName(), m.RangeStart, m.RangeEnd, len(m.Columns), m.AlgorithmRelease, *url)
 	fmt.Println("Open a PR against the Shards repo adding the file above; CI verifies it, then merge.")
+	fmt.Printf("In the same PR, remove the fulfilled work order: pending/T-%s-%d-%d.json\n",
+		m.tableName(), m.RangeStart, m.RangeEnd)
 	return exitOK
 }
 
