@@ -58,7 +58,6 @@ func cmdCompute(args []string) int {
 	out := fs.String("out", "", "output shard path (default ./<id>)")
 	chunk := fs.Int("chunk-size", 0, "rows per chunk (0 = executor default)")
 	format := fs.String("format", "parquet", "parquet|csv")
-	algosRelease := fs.String("algos-release", "", "algorithm release to stamp/pin")
 	algosBin := algosBinFlag(fs)
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
@@ -100,9 +99,6 @@ func cmdCompute(args []string) int {
 	default:
 		fmt.Fprintln(os.Stderr, "usage: integer-atlas compute (--task ID | --manifest FILE | --start S --end E --columns C)")
 		return exitUsage
-	}
-	if *algosRelease != "" {
-		wo.AlgorithmRelease = *algosRelease
 	}
 
 	bin, err := resolveAlgos(*algosBin)
@@ -283,6 +279,10 @@ func cmdSubmit(args []string) int {
 	}
 	if *license != "" {
 		m.License = *license
+	}
+	if m.AlgorithmRelease == "" {
+		fmt.Fprintln(os.Stderr, "manifest has no algorithm_release; recompute the shard with the current atlas-algos (it stamps its own version) — the registry rejects an empty value")
+		return exitUsage
 	}
 	final, _ := json.MarshalIndent(m, "", "  ")
 	if *out != "" {
