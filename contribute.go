@@ -284,6 +284,7 @@ func cmdSubmit(args []string) int {
 		fmt.Fprintln(os.Stderr, "manifest has no algorithm_release; recompute the shard with the current atlas-algos (it stamps its own version) — the registry rejects an empty value")
 		return exitUsage
 	}
+	m.Verification.Status = "accepted" // it goes straight into accepted/; CI verifies it on the PR
 	final, _ := json.MarshalIndent(m, "", "  ")
 	if *out != "" {
 		if err := os.WriteFile(*out, append(final, '\n'), 0o644); err != nil {
@@ -291,7 +292,7 @@ func cmdSubmit(args []string) int {
 		}
 	}
 
-	dest := fmt.Sprintf("computed/%s/%s.json", m.tableName(), trimExt(m.File))
+	dest := fmt.Sprintf("accepted/%s/%s.json", m.tableName(), trimExt(m.File))
 	fmt.Println("=== manifest (add to the Shards repo at the path below) ===")
 	fmt.Printf("path: %s\n\n", dest)
 	fmt.Println(string(final))
@@ -299,7 +300,7 @@ func cmdSubmit(args []string) int {
 	fmt.Printf("title: add %s\n", m.File)
 	fmt.Printf("body:  %s shard %d..%d (%d columns) computed with %q; hosted at %s\n",
 		m.tableName(), m.RangeStart, m.RangeEnd, len(m.Columns), m.AlgorithmRelease, *url)
-	fmt.Println("Open a PR against the Shards repo adding the file above, then merge after CI verify.")
+	fmt.Println("Open a PR against the Shards repo adding the file above; CI verifies it, then merge.")
 	return exitOK
 }
 
