@@ -2,15 +2,19 @@ package main
 
 import (
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"hash"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"lukechampine.com/blake3"
 )
 
 const (
@@ -81,17 +85,52 @@ func gitRun(args ...string) error {
 	return cmd.Run()
 }
 
-func sha256File(path string) (string, error) {
+// verifyHashes recomputes, in a single read, every digest the manifest declares
+// (sha256, sha512, blake3) and compares each. It returns the algorithms verified
+// (in stable order). A non-empty mismatch string names the first digest that did
+// not match; err is reserved for I/O problems. An unset digest is skipped.
+func verifyHashes(path string, want Hashes) (checked []string, mismatch string, err error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 	defer f.Close()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
+
+	type entry struct {
+		name string
+		want string
+		h    hash.Hash
 	}
-	return hex.EncodeToString(h.Sum(nil)), nil
+	var entries []entry
+	if want.SHA256 != "" {
+		entries = append(entries, entry{"sha256", want.SHA256, sha256.New()})
+	}
+	if want.SHA512 != "" {
+		entries = append(entries, entry{"sha512", want.SHA512, sha512.New()})
+	}
+	if want.BLAKE3 != "" {
+		entries = append(entries, entry{"blake3", want.BLAKE3, blake3.New(32, nil)})
+	}
+	if len(entries) == 0 {
+		return nil, "", nil
+	}
+
+	ws := make([]io.Writer, len(entries))
+	for i, e := range entries {
+		ws[i] = e.h
+	}
+	if _, err := io.Copy(io.MultiWriter(ws...), f); err != nil {
+		return nil, "", err
+	}
+
+	for _, e := range entries {
+		got := hex.EncodeToString(e.h.Sum(nil))
+		if got != e.want {
+			return checked, fmt.Sprintf("%s mismatch: want %s got %s", e.name, shortHash(e.want), shortHash(got)), nil
+		}
+		checked = append(checked, e.name)
+	}
+	return checked, "", nil
 }
 
 func download(url, dest string) error {

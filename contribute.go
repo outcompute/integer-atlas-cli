@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // compute, verify, and submit: bridge between the Shards manifest shapes and the
@@ -220,17 +221,18 @@ func cmdVerify(args []string) int {
 		}
 	}
 
-	// Hash check (the CLI does this itself before recomputing).
-	if m.Hashes.SHA256 != "" {
-		got, err := sha256File(path)
-		if err != nil {
-			return errReturn(err)
-		}
-		if got != m.Hashes.SHA256 {
-			fmt.Fprintf(os.Stderr, "hash mismatch: want %s got %s\n", shortHash(m.Hashes.SHA256), shortHash(got))
-			return exitVerify
-		}
-		fmt.Printf("sha256 ok %s\n", shortHash(got))
+	// Hash check (the CLI does this itself before recomputing): every digest the
+	// manifest declares, not just sha256.
+	checked, mismatch, err := verifyHashes(path, m.Hashes)
+	if err != nil {
+		return errReturn(err)
+	}
+	if mismatch != "" {
+		fmt.Fprintln(os.Stderr, mismatch)
+		return exitVerify
+	}
+	if len(checked) > 0 {
+		fmt.Printf("%s ok\n", strings.Join(checked, "+"))
 	}
 
 	bin, err := resolveAlgos(*algosBin)

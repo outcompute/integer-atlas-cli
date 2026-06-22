@@ -2,7 +2,10 @@ module github.com/outcompute/integer-atlas-cli
 
 go 1.26
 
-require github.com/marcboeker/go-duckdb/v2 v2.4.3
+require (
+	github.com/marcboeker/go-duckdb/v2 v2.4.3
+	lukechampine.com/blake3 v1.4.1
+)
 
 require (
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect

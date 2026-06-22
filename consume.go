@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func cmdFetch(args []string) int {
@@ -64,12 +65,12 @@ func cmdFetch(args []string) int {
 			fmt.Fprintf(os.Stderr, "  download failed: %v\n", err)
 			return exitErr
 		}
-		got, err := sha256File(dest)
+		checked, mismatch, err := verifyHashes(dest, m.Hashes)
 		if err != nil {
 			return errReturn(err)
 		}
-		if m.Hashes.SHA256 != "" && got != m.Hashes.SHA256 {
-			fmt.Fprintf(os.Stderr, "  hash mismatch (want %s, got %s)\n", shortHash(m.Hashes.SHA256), shortHash(got))
+		if mismatch != "" {
+			fmt.Fprintf(os.Stderr, "  %s\n", mismatch)
 			return exitVerify
 		}
 		// cache the manifest so the DB views can be (re)built from the cache.
@@ -77,7 +78,11 @@ func cmdFetch(args []string) int {
 		if err := os.WriteFile(filepath.Join(md, m.File+".json"), append(mb, '\n'), 0o644); err != nil {
 			return errReturn(err)
 		}
-		fmt.Printf("  ok %s\n", shortHash(got))
+		if len(checked) > 0 {
+			fmt.Printf("  ok %s\n", strings.Join(checked, "+"))
+		} else {
+			fmt.Println("  ok")
+		}
 	}
 
 	if *noLoad {
