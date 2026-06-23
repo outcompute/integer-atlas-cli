@@ -74,7 +74,7 @@ shard files), and `atlas.duckdb`. Created automatically; the installer also sets
 
 | Command | Does | Options | Side effects | When |
 | --- | --- | --- | --- | --- |
-| `fetch` | Download accepted shards for the request, verify hashes, and **auto-load** them into the local DB. | `<group>` \| (`--start`,`--end`,`--columns`), `--release`, `--no-load`, `--refresh` | downloads files; updates `atlas.duckdb` | Get data to query. |
+| `fetch` | Download the accepted shards for the request, verify **every** manifest hash, and **auto-load** them. Selects **whole shard files** by pack, column, or range — narrow rows/columns later in SQL. Refuses to pull the whole dataset unless scoped (or `--all`). | `<pack…>` or `--table core,factor`; `--columns` (selects the groups that carry them); `--start`/`--end` (range overlap); `--all`; `--no-load`, `--refresh`, `--release` | downloads files; updates `atlas.duckdb` | Get data to query. |
 | `sql` | Read-only SQL over the loaded data; no arg → REPL. | `"<query>"` \| `--file F`, `--format table\|csv\|json\|parquet`, `--output PATH` | read-only (writes only with `--output`) | Query/analyze; `--output` exports. |
 | `status` | Show what's fetched/loaded, DB size, registry pointer, and toolchain state. | `--json` | none | Inspect local state. |
 

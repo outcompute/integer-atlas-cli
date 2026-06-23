@@ -22,7 +22,7 @@ toolchain install happen automatically, with power-user flags).
 | --- | --- |
 | `packs` | list packs, ranges covered, and state (accepted/pending) |
 | `describe <pack\|column>` | descriptions, types, OEIS |
-| `fetch` | download accepted shards, verify, and auto-load into the local DB |
+| `fetch` | download accepted shards (by pack, `--columns`, or range), verify all hashes, and auto-load into the local DB |
 | `sql` | read-only SQL over loaded data (or REPL) |
 | `status` | what's fetched/loaded locally |
 | `work` | list pending shards needing computation |
