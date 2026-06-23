@@ -21,15 +21,29 @@ case "$os" in
   Linux)
     case "$arch" in
       x86_64|amd64) asset=integer-atlas-linux-amd64 ;;
+      aarch64|arm64) asset=integer-atlas-linux-arm64 ;;
       *) echo "unsupported Linux arch: $arch (build from source: go build ./...)" >&2; exit 1 ;;
     esac ;;
   *) echo "unsupported OS: $os" >&2; exit 1 ;;
 esac
 
-url="https://github.com/$OWNER/$REPO/releases/latest/download/$asset"
+base="https://github.com/$OWNER/$REPO/releases/latest/download"
 echo "Downloading $asset ..."
 tmp=$(mktemp)
-curl -fsSL "$url" -o "$tmp"
+curl -fsSL "$base/$asset" -o "$tmp"
+
+# Verify against the published SHA256SUMS when checksum tools are available.
+sums=$(mktemp)
+if curl -fsSL "$base/SHA256SUMS" -o "$sums" 2>/dev/null; then
+  want=$(awk -v a="$asset" '$2==a {print $1}' "$sums")
+  if command -v sha256sum >/dev/null 2>&1; then got=$(sha256sum "$tmp" | awk '{print $1}');
+  elif command -v shasum >/dev/null 2>&1; then got=$(shasum -a 256 "$tmp" | awk '{print $1}'); fi
+  if [ -n "$want" ] && [ -n "${got:-}" ] && [ "$want" != "$got" ]; then
+    echo "checksum mismatch for $asset (want $want, got $got)" >&2; rm -f "$tmp" "$sums"; exit 1
+  fi
+  [ -n "$want" ] && [ -n "${got:-}" ] && echo "checksum OK ($asset)"
+fi
+rm -f "$sums"
 chmod +x "$tmp"
 
 if [ -w "$INSTALL_DIR" ]; then

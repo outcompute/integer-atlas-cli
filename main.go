@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const version = "0.1.0-dev"
+const version = "0.1.0"
 
 func main() {
 	os.Exit(dispatch(os.Args[1:]))

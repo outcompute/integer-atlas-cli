@@ -1,8 +1,10 @@
 name: Release
 
-# On a version tag, build a cgo (embedded-DuckDB) binary per OS on its native
-# runner and attach them to the GitHub release. (cgo can't be cross-compiled
-# cleanly, so each target builds where it runs. Windows is not built.)
+# On a version tag, build the cgo (embedded-DuckDB) binary for each target on a
+# native runner, then publish all binaries + a SHA256SUMS file to the release.
+# cgo can't be cross-compiled cleanly, so each target builds where it runs.
+# Linux builds run inside a glibc-2.28 (manylinux_2_28) container so the binaries
+# run on older distros too (Ubuntu 18.04+, Amazon Linux 2/2023, RHEL/Alma 8+).
 on:
   push:
     tags: ["v*"]
@@ -11,24 +13,66 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-linux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            asset: integer-atlas-linux-amd64
-          - os: macos-latest
-            asset: integer-atlas-darwin-arm64
-          - os: macos-13
-            asset: integer-atlas-darwin-amd64
-    runs-on: ${{ matrix.os }}
+          - target: linux-amd64
+            runs-on: ubuntu-latest
+            image: quay.io/pypa/manylinux_2_28_x86_64
+          - target: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            image: quay.io/pypa/manylinux_2_28_aarch64
+    runs-on: ${{ matrix.runs-on }}
+    container: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26"
-      - run: CGO_ENABLED=1 go build -o ${{ matrix.asset }} .
+      - run: CGO_ENABLED=1 go build -trimpath -o "integer-atlas-${{ matrix.target }}" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: integer-atlas-${{ matrix.target }}
+          path: integer-atlas-${{ matrix.target }}
+
+  build-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runs-on: macos-latest
+          - target: darwin-amd64
+            runs-on: macos-13
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - run: CGO_ENABLED=1 go build -trimpath -o "integer-atlas-${{ matrix.target }}" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: integer-atlas-${{ matrix.target }}
+          path: integer-atlas-${{ matrix.target }}
+
+  release:
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          cd dist
+          chmod +x integer-atlas-*
+          sha256sum integer-atlas-* | tee SHA256SUMS
       - uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.asset }}
+          files: |
+            dist/integer-atlas-*
+            dist/SHA256SUMS
