@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const version = "0.1.3"
+const version = "0.1.4"
 
 func main() {
 	os.Exit(dispatch(os.Args[1:]))
@@ -58,10 +58,11 @@ func usage() {
 
 usage: integer-atlas <command> [options]
 
-  discover    packs   describe   work   status
-  consume     fetch   sql
-  contribute  compute verify     sideload  submit
-  utility     doctor  version    help
+commands:
+  packs   describe   work   status        discover what's published
+  fetch   sql                             get data, then query it
+  compute   verify   sideload   submit    compute & contribute shards
+  doctor   version   help                 diagnostics & info
 
 global flags: --workspace DIR  --registry URL|PATH  --release REF  --refresh
               --json  -y/--yes  --log-level L
