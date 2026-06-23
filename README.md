@@ -75,6 +75,6 @@ is no index file. `--release <ref>` pins a git tag/commit for a reproducible sna
 Reads the Shards repo (git clone or local path) and downloads shard files over HTTP from
 their manifest URLs; drives Algos via subprocess. Does not import either repo's code.
 
-## License
+## License & citation
 
-MIT — see [LICENSE](LICENSE).
+Code: MIT — see [LICENSE](LICENSE). If you use Integer Atlas, please cite it — see [CITATION.cff](CITATION.cff).

@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "Integer Atlas — CLI"
+message: "If you use Integer Atlas, please cite it."
+type: software
+authors:
+  - name: "outcompute"
+repository-code: "https://github.com/outcompute/integer-atlas-cli"
+url: "https://github.com/outcompute/integer-atlas-cli"
+license: MIT
+date-released: 2026-06-23
