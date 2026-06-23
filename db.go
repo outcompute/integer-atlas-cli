@@ -60,6 +60,24 @@ func rebuildViews(db *sql.DB, cfg *Config) error {
 			return fmt.Errorf("build view %q: %w", table, err)
 		}
 	}
+
+	// Unified `numbers` view: FULL JOIN every loaded table on n, so a consumer can
+	// query columns from any pack together (this is the documented entry point).
+	// Skipped if a pack is itself named "numbers" (its own view already serves).
+	if _, isNumbers := byTable["numbers"]; !isNumbers && len(byTable) > 0 {
+		tnames := make([]string, 0, len(byTable))
+		for t := range byTable {
+			tnames = append(tnames, t)
+		}
+		sort.Strings(tnames)
+		q := `CREATE OR REPLACE VIEW "numbers" AS SELECT * FROM "` + tnames[0] + `"`
+		for i := 1; i < len(tnames); i++ {
+			q += ` FULL JOIN "` + tnames[i] + `" USING (n)`
+		}
+		if _, err := db.Exec(q); err != nil {
+			return fmt.Errorf("build view numbers: %w", err)
+		}
+	}
 	return nil
 }
 
