@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -186,8 +187,12 @@ func cmdStatus(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
+	dbPath := filepath.Join(cfg.Workspace, "atlas.duckdb")
 	st := map[string]any{"workspace": cfg.Workspace, "registry": cfg.Registry,
-		"duckdb": "embedded (go-duckdb)"}
+		"database": dbPath, "engine": "embedded (go-duckdb)"}
+	if fi, err := os.Stat(dbPath); err == nil {
+		st["database_bytes"] = fi.Size()
+	}
 	root, err := resolveRegistry(cfg)
 	if err != nil {
 		st["registry_error"] = err.Error()
@@ -210,7 +215,12 @@ func cmdStatus(args []string) int {
 	} else {
 		fmt.Printf("registry  : ERROR %v\n", st["registry_error"])
 	}
-	fmt.Printf("duckdb    : %s\n", st["duckdb"])
+	if b, ok := st["database_bytes"].(int64); ok {
+		fmt.Printf("database  : %s (%.1f MB)\n", dbPath, float64(b)/1e6)
+	} else {
+		fmt.Printf("database  : %s (not created yet)\n", dbPath)
+	}
+	fmt.Printf("engine    : embedded (go-duckdb)\n")
 	return exitOK
 }
 
